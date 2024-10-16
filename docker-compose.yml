@@ -1,0 +1,35 @@
+version: "3"
+services:
+  db:
+    container_name: db
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - 5432:5432
+
+  backend:
+    container_name: backend
+    build: ./backend
+    volumes:
+      - ./backend/storage:/app/storage
+    depends_on:
+      - db
+    command: sh -c "bundle exec rails db:migrate && bundle exec rails server -b 0.0.0.0"    
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+  
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"  
+    environment:
+      - VITE_REACT_APP_API_URL=backend:3000
+    depends_on:
+      - backend
